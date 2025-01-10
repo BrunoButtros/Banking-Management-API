@@ -1,4 +1,4 @@
-package com.banking.management.banking_management_api;
+package dev.bruno.banking;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

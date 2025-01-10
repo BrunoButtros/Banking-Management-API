@@ -1,4 +1,4 @@
-package com.banking.management.banking_management_api.model;
+package dev.bruno.banking.model;
 
 
 import jakarta.persistence.*;
@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Usuario {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +21,7 @@ public class Usuario {
     private String email;
 
     @Column(nullable = false)
-    private String senha;
+    private String password;
 
 
 }

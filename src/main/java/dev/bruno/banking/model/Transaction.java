@@ -1,4 +1,4 @@
-package com.banking.management.banking_management_api.model;
+package dev.bruno.banking.model;
 
 
 import jakarta.persistence.*;
@@ -11,23 +11,23 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-public class Transacao {
+public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false)
-    private BigDecimal valor;
+    private BigDecimal amount;
 
     @Column(nullable = false)
-    private String tipo; //"DEPÓSITO", "RETIRADA"
+    private String type; //"DEPÓSITO", "RETIRADA"
 
     @Column(nullable = false)
-    private LocalDateTime data = LocalDateTime.now();
+    private LocalDateTime date = LocalDateTime.now();
 
 
 
