@@ -16,7 +16,7 @@ public class UserService {
     }
 
     public void deleteUser(Long id) {
-        if(userRepository.existsById(id)){
+        if (userRepository.existsById(id)) {
             userRepository.deleteById(id);
         } else {
             throw new RuntimeException("User not found with id " + id);
@@ -25,17 +25,24 @@ public class UserService {
 
     public User updateUser(Long id, User updatedUser) {
         Optional<User> existingUser = userRepository.findById(id);
-        if (existingUser.isPresent()) {
-            User user = existingUser.get();
-            user.setName(updatedUser.getName());
-            user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-            return userRepository.save(user);
+        if (existingUser.isEmpty()) {
+            throw new RuntimeException("User not found with id " + id);
         }
-        throw new RuntimeException("User not found with id " + id);
+
+        User user = existingUser.get();
+
+        if (updatedUser.getName() != null) {
+            user.setName(updatedUser.getName());
+        }
+        if (updatedUser.getEmail() != null) {
+            user.setEmail(updatedUser.getEmail());
+        }
+        if (updatedUser.getPassword() != null) {
+            user.setPassword(updatedUser.getPassword());
+        }
+
+        return userRepository.save(user);
     }
-
-
 
 
     public Optional<User> findById(Long Id) {
