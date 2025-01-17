@@ -20,6 +20,12 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
+    @PostMapping
+    public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {
+        Transaction createdTransaction = transactionService.createTransaction(transaction);
+        return ResponseEntity.ok(createdTransaction);
+    }
+
     // ID / TYPE / DATE
 
     @GetMapping("/{id}")
