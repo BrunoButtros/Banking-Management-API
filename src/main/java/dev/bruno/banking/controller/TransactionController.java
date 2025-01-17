@@ -13,9 +13,12 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
-    @Autowired
-    private TransactionService transactionService;
+    private final TransactionService transactionService;
 
+    @Autowired
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
 
     // ID / TYPE / DATE
 

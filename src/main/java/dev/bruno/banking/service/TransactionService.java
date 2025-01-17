@@ -12,8 +12,14 @@ import java.util.Optional;
 
 @Service
 public class TransactionService {
+
+
+    private final TransactionRepository transactionRepository;
+
     @Autowired
-    private TransactionRepository transactionRepository;
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
 
     public Optional<Transaction> findById(Long id) {
         return transactionRepository.findById(id);
@@ -27,7 +33,7 @@ public class TransactionService {
         return transactionRepository.findByDateBetween(inicio, fim);
     }
 
-      public Transaction createTransaction(Transaction transaction) {
+    public Transaction createTransaction(Transaction transaction) {
         return transactionRepository.save(transaction);
     }
 
