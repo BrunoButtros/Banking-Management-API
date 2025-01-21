@@ -4,6 +4,8 @@ import dev.bruno.banking.model.Transaction;
 import dev.bruno.banking.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -21,28 +23,33 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {
-        Transaction createdTransaction = transactionService.createTransaction(transaction);
+    public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction,
+                                                         @AuthenticationPrincipal UserDetails userDetails) {
+        Transaction createdTransaction = transactionService.createTransaction(transaction, userDetails);
         return ResponseEntity.ok(createdTransaction);
     }
 
     // ID / TYPE / DATE
 
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> findById(@PathVariable Long id) {
-        Optional<Transaction> transaction = transactionService.findById(id);
+    public ResponseEntity<Transaction> findById(@PathVariable Long id,
+                                                @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<Transaction> transaction = transactionService.findById(id, userDetails);
         return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/type")
-    public ResponseEntity<List<Transaction>> FindByType(@RequestParam String type) {
-        List<Transaction> transacoes = transactionService.findByType(type);
-        return ResponseEntity.ok(transacoes);
+    public ResponseEntity<List<Transaction>> findByType(@RequestParam String type,
+                                                        @AuthenticationPrincipal UserDetails userDetails) {
+        List<Transaction> transactions = transactionService.findByType(type, userDetails);
+        return ResponseEntity.ok(transactions);
     }
 
     @GetMapping("/dates")
-    public ResponseEntity<List<Transaction>> findByDataBetween(@RequestParam LocalDateTime inicio, @RequestParam LocalDateTime fim) {
-        List<Transaction> transactions = transactionService.findByDateBetween(inicio, fim);
+    public ResponseEntity<List<Transaction>> findByDateBetween(@RequestParam LocalDateTime inicio,
+                                                               @RequestParam LocalDateTime fim,
+                                                               @AuthenticationPrincipal UserDetails userDetails) {
+        List<Transaction> transactions = transactionService.findByDateBetween(inicio, fim, userDetails);
         return ResponseEntity.ok(transactions);
     }
 }
