@@ -25,28 +25,31 @@ public class TransactionService {
         this.userService = userService;
     }
 
+    private String getAuthenticatedUserEmail(UserDetails userDetails) {  // Método para obter o email do usuário autenticado
+        return userDetails.getUsername();
+    }
+
 
     public Optional<Transaction> findById(Long id, UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();
+        String userEmail = getAuthenticatedUserEmail(userDetails);
         return transactionRepository.findByIdAndUserEmail(id, userEmail);
     }
 
     public List<Transaction> findByType(String type, UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();
+        String userEmail = getAuthenticatedUserEmail(userDetails);
         return transactionRepository.findByTypeAndUserEmail(type, userEmail);
     }
 
-    public List<Transaction> findByDateBetween(LocalDateTime inicio, LocalDateTime fim, UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();
-        return transactionRepository.findByDateBetweenAndUserEmail(inicio, fim, userEmail);
+    public List<Transaction> findByDateBetween(LocalDateTime startDate, LocalDateTime endDate, UserDetails userDetails) {
+        String userEmail = getAuthenticatedUserEmail(userDetails);
+        return transactionRepository.findByDateBetweenAndUserEmail(startDate, endDate, userEmail);
     }
 
     public Transaction createTransaction(Transaction transaction, UserDetails userDetails) {
-        // Obter o usuário autenticado
-        String userEmail = userDetails.getUsername();
+        String userEmail = getAuthenticatedUserEmail(userDetails); // Obter o usuário autenticado
         User user = userService.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        transaction.setUser(user);
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + userEmail));
+        transaction.setUser(user); // Associar a transação ao usuário autenticado
         return transactionRepository.save(transaction);
     }
 }
