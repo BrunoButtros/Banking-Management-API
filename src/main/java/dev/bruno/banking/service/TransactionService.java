@@ -2,6 +2,7 @@ package dev.bruno.banking.service;
 
 
 import dev.bruno.banking.model.Transaction;
+import dev.bruno.banking.model.TransactionType;
 import dev.bruno.banking.model.User;
 import dev.bruno.banking.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,18 +26,18 @@ public class TransactionService {
         this.userService = userService;
     }
 
-    private String getAuthenticatedUserEmail(UserDetails userDetails) {  // Método para obter o email do usuário autenticado
-        return userDetails.getUsername();
-    }
+    private String getAuthenticatedUserEmail(UserDetails userDetails) {// Método para obter o email do usuário autenticado
+        return "albion@example.com"; //Utilizando para teste
 
+        // return userDetails.getUsername();   regra final
+    }
 
     public Optional<Transaction> findById(Long id, UserDetails userDetails) {
         String userEmail = getAuthenticatedUserEmail(userDetails);
         return transactionRepository.findByIdAndUserEmail(id, userEmail);
     }
 
-    public List<Transaction> findByType(String type, UserDetails userDetails) {
-        String userEmail = getAuthenticatedUserEmail(userDetails);
+    public List<Transaction> findByType(TransactionType type, String userEmail) {
         return transactionRepository.findByTypeAndUserEmail(type, userEmail);
     }
 
@@ -50,6 +51,9 @@ public class TransactionService {
         User user = userService.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + userEmail));
         transaction.setUser(user); // Associar a transação ao usuário autenticado
+        if (transaction.getType() == null) {
+            throw new IllegalArgumentException("O tipo da transação não pode ser nulo");
+        }
         return transactionRepository.save(transaction);
     }
 }

@@ -13,9 +13,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/transactions/**").permitAll() // Libera os endpoints de transações
-                        .requestMatchers("/users/**").permitAll() // Libera os endpoints de usuários
-                        .anyRequest().permitAll() // Permite qualquer outro endpoint
+                        .anyRequest().permitAll() // Permite qualquer endpoint
                 )
                 .csrf(AbstractHttpConfigurer::disable) // Desabilita CSRF para simplificar testes
                 .httpBasic(AbstractHttpConfigurer::disable) // Substituímos o httpBasic() por uma abordagem mais moderna

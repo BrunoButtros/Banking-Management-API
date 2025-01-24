@@ -1,6 +1,7 @@
 package dev.bruno.banking.controller;
 
 import dev.bruno.banking.model.Transaction;
+import dev.bruno.banking.model.TransactionType;
 import dev.bruno.banking.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,9 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction,
-                                                         @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Transaction> createTransaction(
+            @RequestBody Transaction transaction,
+            @AuthenticationPrincipal UserDetails userDetails) {
         Transaction createdTransaction = transactionService.createTransaction(transaction, userDetails);
         return ResponseEntity.ok(createdTransaction);
     }
@@ -39,9 +41,11 @@ public class TransactionController {
     }
 
     @GetMapping("/type")
-    public ResponseEntity<List<Transaction>> findByType(@RequestParam String type,
-                                                        @AuthenticationPrincipal UserDetails userDetails) {
-        List<Transaction> transactions = transactionService.findByType(type, userDetails);
+    public ResponseEntity<List<Transaction>> findByType(
+            @RequestParam TransactionType type,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String userEmail = userDetails.getUsername(); // Pega o e-mail do método getUsername()
+        List<Transaction> transactions = transactionService.findByType(type, userEmail);
         return ResponseEntity.ok(transactions);
     }
 

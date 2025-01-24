@@ -1,6 +1,7 @@
 package dev.bruno.banking.repository;
 
 import dev.bruno.banking.model.Transaction;
+import dev.bruno.banking.model.TransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     @Query("SELECT t FROM Transaction t WHERE t.type = :type AND t.user.email = :email")
-    List<Transaction> findByTypeAndUserEmail(@Param("type") String type, @Param("email") String email);
+    List<Transaction> findByTypeAndUserEmail(@Param("type") TransactionType type, @Param("email") String email);
 
     // Busca por intervalo de datas filtrado pelo usuário
     @Query("SELECT t FROM Transaction t WHERE t.date BETWEEN :startDate AND :endDate AND t.user.email = :email")
