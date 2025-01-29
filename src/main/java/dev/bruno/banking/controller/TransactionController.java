@@ -1,11 +1,14 @@
 package dev.bruno.banking.controller;
 
+import dev.bruno.banking.dto.TransactionSummaryDto;
 import dev.bruno.banking.model.Transaction;
 import dev.bruno.banking.model.TransactionType;
 import dev.bruno.banking.service.ExcelTemplateService;
 import dev.bruno.banking.service.TransactionImportService;
 import dev.bruno.banking.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
+
     private final TransactionService transactionService;
 
     @Autowired
@@ -43,8 +47,6 @@ public class TransactionController {
         return ResponseEntity.ok(createdTransaction);
     }
 
-    // ID / TYPE / DATE
-
     @GetMapping("/{id}")
     public ResponseEntity<Transaction> findById(@PathVariable Long id,
                                                 @AuthenticationPrincipal UserDetails userDetails) {
@@ -52,23 +54,32 @@ public class TransactionController {
         return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/type")
-    public ResponseEntity<List<Transaction>> findByType(
-            @RequestParam TransactionType type,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        String userEmail = userDetails.getUsername(); // Pega o e-mail do método getUsername()
-        List<Transaction> transactions = transactionService.findByType(type, userEmail);
-        return ResponseEntity.ok(transactions);
-    }
+    @GetMapping("/summary")
+    public ResponseEntity<Page<TransactionSummaryDto>> getTransactionSummary(
+            @AuthenticationPrincipal UserDetails userDetails, // Remover o userId como parâmetro, agora é obtido do userDetails
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) TransactionType type, // Tipo opcional
+            @RequestParam(defaultValue = "0") int page) {
 
-    @GetMapping("/dates")
-    public ResponseEntity<List<Transaction>> findByDateBetween(@RequestParam LocalDateTime inicio,
-                                                               @RequestParam LocalDateTime fim,
-                                                               @AuthenticationPrincipal UserDetails userDetails) {
-        List<Transaction> transactions = transactionService.findByDateBetween(inicio, fim, userDetails);
-        return ResponseEntity.ok(transactions);
-    }
+        int size = 10; // Fixando o tamanho da página em 10
 
+        // Verifica se startDate e endDate são nulos, e ajusta para pegar todas as transações caso não sejam passadas
+        if (startDate == null) {
+            startDate = LocalDateTime.of(2000, 1, 1, 0, 0, 0, 0); // Data inicial mais antiga possível
+        }
+        if (endDate == null) {
+            endDate = LocalDateTime.now(); // Data final como o momento atual
+        }
+
+        // Extrai o ID do usuário autenticado
+        Long userId = Long.parseLong(userDetails.getUsername());
+
+        // Chama o serviço para obter o resumo das transações
+        Page<TransactionSummaryDto> summary = transactionService.getTransactionSummary(userId, startDate, endDate, type, page, size);
+
+        return ResponseEntity.ok(summary);
+    }
 
     @GetMapping("/download-template")
     public ResponseEntity<byte[]> downloadTransactionTemplate() {
@@ -92,17 +103,13 @@ public class TransactionController {
             // Retorna a resposta com as transações importadas
             return ResponseEntity.ok("Transações importadas com sucesso! Total de transações importadas: " + transactions.size());
         } catch (IOException e) {
-            // Retorna um erro em caso de falha na leitura do arquivo
             return ResponseEntity.status(500).body("Erro ao processar o arquivo Excel: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            // Retorna um erro caso algum dado inválido seja encontrado no arquivo
             return ResponseEntity.badRequest().body("Erro: dados inválidos: " + e.getMessage());
         } catch (Exception e) {
-            // Retorna um erro genérico
             return ResponseEntity.status(500).body("Erro desconhecido: " + e.getMessage());
         }
     }
-
 }
 
 
