@@ -1,7 +1,7 @@
 package dev.bruno.banking.service;
 
 
-import dev.bruno.banking.dto.TransactionSummaryDto;
+import dev.bruno.banking.dto.TransactionSummaryDTO;
 import dev.bruno.banking.model.Transaction;
 import dev.bruno.banking.model.TransactionType;
 import dev.bruno.banking.model.User;
@@ -32,33 +32,31 @@ public class TransactionService {
     }
 
     private Long getAuthenticatedUserId(UserDetails userDetails) {
-        // Utilizando para teste o ID de usuário fixo
-        return 1L; // Simulando ID de usuário para teste
-        // return userDetails.getUsername(); // Regra final para pegar o ID real do usuário
-    }
+        return 5L;
+    }//teste
 
     public Optional<Transaction> findById(Long id, UserDetails userDetails) {
         Long userId = getAuthenticatedUserId(userDetails);
         return transactionRepository.findByIdAndUserId(id, userId);
     }
 
-    public Page<TransactionSummaryDto> getTransactionSummary(Long userId, LocalDateTime startDate,
+    public Page<TransactionSummaryDTO> getTransactionSummary(LocalDateTime startDate,
                                                              LocalDateTime endDate, TransactionType type,
                                                              int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
 
         // Se tipo for nulo, buscar todas as transações, se não, filtra por tipo
         Page<Transaction> transactions = (type == null)
-                ? transactionRepository.findByUserIdAndDateRangeAndType(userId, startDate, endDate, null, pageRequest)
-                : transactionRepository.findByUserIdAndDateRangeAndType(userId, startDate, endDate, type, pageRequest);
+                ? transactionRepository.findByUserIdAndDateRangeAndType(getAuthenticatedUserId(null), startDate, endDate, null, pageRequest)
+                : transactionRepository.findByUserIdAndDateRangeAndType(getAuthenticatedUserId(null), startDate, endDate, type, pageRequest);
 
         // Agrupando as transações por tipo e calculando o resumo
-        List<TransactionSummaryDto> summaries = transactions
+        List<TransactionSummaryDTO> summaries = transactions
                 .stream()
                 .collect(Collectors.groupingBy(Transaction::getType))
                 .entrySet()
                 .stream()
-                .map(entry -> new TransactionSummaryDto(
+                .map(entry -> new TransactionSummaryDTO(
                         entry.getKey(),
                         entry.getValue().stream().map(Transaction::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add),
                         entry.getValue().size()

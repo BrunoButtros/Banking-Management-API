@@ -8,12 +8,12 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class TransactionSummaryDto {
+public class TransactionSummaryDTO {
     private TransactionType type;
     private BigDecimal totalAmount;
     private long transactionCount;
 
-    public TransactionSummaryDto(TransactionType type, BigDecimal totalAmount, long transactionCount) {
+    public TransactionSummaryDTO(TransactionType type, BigDecimal totalAmount, long transactionCount) {
         this.type = type;
         this.totalAmount = totalAmount;
         this.transactionCount = transactionCount;

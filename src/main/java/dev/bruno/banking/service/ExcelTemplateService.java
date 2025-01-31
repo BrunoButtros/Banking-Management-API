@@ -28,11 +28,9 @@ public class ExcelTemplateService {
                 font.setBold(true);
                 style.setFont(font);
                 cell.setCellStyle(style);
-            }
 
-            // Ajustar automaticamente o tamanho das colunas
-            for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
+
             }
 
             // Converter para array de bytes

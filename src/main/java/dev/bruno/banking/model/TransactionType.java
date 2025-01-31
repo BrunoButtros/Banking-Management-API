@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public enum TransactionType {
     DEPOSIT("deposit"),
@@ -29,6 +30,8 @@ public enum TransactionType {
 
     @JsonCreator
     public static TransactionType fromValue(String value) {
+        if (Objects.isNull(value))
+            return null;
         return Arrays.stream(TransactionType.values())
                 .filter(transactionType -> transactionType.value.equalsIgnoreCase(value))
                 .findFirst()
