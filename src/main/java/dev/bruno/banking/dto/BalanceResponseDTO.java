@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BalanceResponseDTO {
-    @JsonProperty("userId")
-    private String userId;
+    @JsonProperty("userEmail")
+    private String userEmail;
 
     @JsonProperty("balance")
     private Double balance;
