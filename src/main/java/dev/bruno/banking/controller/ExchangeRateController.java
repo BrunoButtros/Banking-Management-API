@@ -1,6 +1,5 @@
 package dev.bruno.banking.controller;
 
-import dev.bruno.banking.dto.ExchangeConversionResponseDTO;
 import dev.bruno.banking.service.ExchangeRateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,11 +12,11 @@ public class ExchangeRateController {
 
     private final ExchangeRateService exchangeRateService;
 
-    @GetMapping("/api/convert")
-    public ExchangeConversionResponseDTO convertCurrency(
+    @GetMapping("/convert")
+    public String convertCurrency(
             @RequestParam String from,
             @RequestParam String to,
             @RequestParam Double amount) {
-        return exchangeRateService.convertCurrency(from, to, amount);
+        return exchangeRateService.convertAndFormat(from, to, amount);
     }
 }

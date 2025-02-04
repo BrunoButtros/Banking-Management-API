@@ -1,12 +1,12 @@
 package dev.bruno.banking.service;
 
-
 import dev.bruno.banking.dto.TransactionSummaryDTO;
+import dev.bruno.banking.dto.TransactionSummaryRequestDTO;
 import dev.bruno.banking.model.Transaction;
 import dev.bruno.banking.model.TransactionType;
 import dev.bruno.banking.model.User;
 import dev.bruno.banking.repository.TransactionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -20,20 +20,16 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final UserService userService;
 
-    @Autowired
-    public TransactionService(TransactionRepository transactionRepository, UserService userService) {
-        this.transactionRepository = transactionRepository;
-        this.userService = userService;
-    }
-
     private Long getAuthenticatedUserId(UserDetails userDetails) {
+        // Para testes
         return 5L;
-    }//teste
+    }
 
     public Optional<Transaction> findById(Long id, UserDetails userDetails) {
         Long userId = getAuthenticatedUserId(userDetails);
@@ -41,41 +37,75 @@ public class TransactionService {
     }
 
     public Page<TransactionSummaryDTO> getTransactionSummary(LocalDateTime startDate,
-                                                             LocalDateTime endDate, TransactionType type,
-                                                             int page, int size) {
+                                                             LocalDateTime endDate,
+                                                             TransactionType type,
+                                                             int page,
+                                                             int size,
+                                                             UserDetails userDetails) {
+        Long userId = getAuthenticatedUserId(userDetails);
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        // Se tipo for nulo, buscar todas as transações, se não, filtra por tipo
-        Page<Transaction> transactions = (type == null)
-                ? transactionRepository.findByUserIdAndDateRangeAndType(getAuthenticatedUserId(null), startDate, endDate, null, pageRequest)
-                : transactionRepository.findByUserIdAndDateRangeAndType(getAuthenticatedUserId(null), startDate, endDate, type, pageRequest);
+        Page<Transaction> transactions = transactionRepository
+                .findByUserIdAndDateRangeAndType(userId, startDate, endDate, type, pageRequest);
 
-        // Agrupando as transações por tipo e calculando o resumo
-        List<TransactionSummaryDTO> summaries = transactions
-                .stream()
+        List<TransactionSummaryDTO> summaries = transactions.stream()
                 .collect(Collectors.groupingBy(Transaction::getType))
                 .entrySet()
                 .stream()
                 .map(entry -> new TransactionSummaryDTO(
                         entry.getKey(),
-                        entry.getValue().stream().map(Transaction::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add),
+                        entry.getValue().stream()
+                                .map(Transaction::getAmount)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add),
                         entry.getValue().size()
                 ))
                 .collect(Collectors.toList());
 
-        // Retorna os resultados como uma página
         return new PageImpl<>(summaries, pageRequest, transactions.getTotalElements());
     }
 
+    public Page<TransactionSummaryDTO> getTransactionSummary(TransactionSummaryRequestDTO requestDTO,
+                                                             UserDetails userDetails) {
+        int size = 10; // Tamanho fixo da página
+        return getTransactionSummary(
+                requestDTO.getStartDate(),
+                requestDTO.getEndDate(),
+                requestDTO.getTransactionType(),
+                requestDTO.getPage(),
+                size,
+                userDetails
+        );
+    }
+
     public Transaction createTransaction(Transaction transaction, UserDetails userDetails) {
-        Long userId = getAuthenticatedUserId(userDetails); // Obtendo o ID do usuário autenticado
+        Long userId = getAuthenticatedUserId(userDetails);
         User user = userService.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + userId));
-        transaction.setUser(user); // Associando a transação ao usuário
+        transaction.setUser(user);
         if (transaction.getType() == null) {
             throw new IllegalArgumentException("O tipo da transação não pode ser nulo");
         }
         return transactionRepository.save(transaction);
     }
-}
 
+    public Transaction updateTransaction(Long id, Transaction updatedTransaction, UserDetails userDetails) {
+        Long userId = getAuthenticatedUserId(userDetails);
+        Transaction existingTransaction = transactionRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new RuntimeException("Transação não encontrada para o usuário: " + id));
+
+        if (updatedTransaction.getType() == null) {
+            throw new IllegalArgumentException("O tipo da transação não pode ser nulo");
+        }
+        existingTransaction.setAmount(updatedTransaction.getAmount());
+        existingTransaction.setType(updatedTransaction.getType());
+        existingTransaction.setDescription(updatedTransaction.getDescription());
+        return transactionRepository.save(existingTransaction);
+    }
+
+    public void deleteTransaction(Long id, UserDetails userDetails) {
+        Long userId = getAuthenticatedUserId(userDetails);
+        Transaction transaction = transactionRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new RuntimeException("Transação não encontrada para o usuário: " + id));
+        transactionRepository.delete(transaction);
+    }
+}

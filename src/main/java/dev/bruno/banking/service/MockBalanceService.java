@@ -23,6 +23,6 @@ public class MockBalanceService {
                 .uri(mockApiUrl)
                 .retrieve()
                 .bodyToMono(BalanceResponseDTO.class)
-                .block(); // Para simplificação, usamos block() aqui.
+                .block();
     }
 }

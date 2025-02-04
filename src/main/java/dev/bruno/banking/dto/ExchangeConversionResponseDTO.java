@@ -35,7 +35,7 @@ public class ExchangeConversionResponseDTO {
     @Getter
     @Setter
     public static class Info {
-        @JsonProperty("rate")
+        @JsonProperty("quote")
         private Double rate;
     }
 }

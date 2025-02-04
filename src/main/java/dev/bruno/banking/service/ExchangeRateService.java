@@ -11,22 +11,37 @@ public class ExchangeRateService {
 
     private final WebClient webClient;
 
+    private static final String API_URL = "https://api.exchangerate.host/convert";
     public ExchangeConversionResponseDTO convertCurrency(String from, String to, Double amount) {
         String apiKey = System.getenv("EXCHANGERATE_API_KEY");
         if (apiKey == null || apiKey.isEmpty()) {
             throw new IllegalStateException("Variável de ambiente EXCHANGERATE_API_KEY não encontrada.");
         }
-        String url = "https://api.exchangerate.host/convert?access_key=" + apiKey +
-                "&from={from}&to={to}&amount={amount}";
+
+        String url = String.format("%s?access_key=%s&from=%s&to=%s&amount=%s",
+                API_URL, apiKey, from, to, amount);
 
         try {
             return webClient.get()
-                    .uri(url, from, to, amount)
+                    .uri(url)
                     .retrieve()
                     .bodyToMono(ExchangeConversionResponseDTO.class)
                     .block();
         } catch (Exception e) {
             throw new RuntimeException("Falha ao buscar dados de câmbio", e);
         }
+    }
+
+    public String convertAndFormat(String from, String to, Double amount) {
+        ExchangeConversionResponseDTO dto = convertCurrency(from, to, amount);
+        if (dto == null || !dto.isSuccess() || dto.getQuery() == null || dto.getInfo() == null) {
+            return "Falha na conversão.";
+        }
+        return String.format("Valor original: %.2f %s – Valor convertido: %.2f %s (Taxa: %.5f)",
+                dto.getQuery().getAmount(),
+                dto.getQuery().getFrom(),
+                dto.getResult(),
+                dto.getQuery().getTo(),
+                dto.getInfo().getRate());
     }
 }

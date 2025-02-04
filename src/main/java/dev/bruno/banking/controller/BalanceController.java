@@ -15,8 +15,22 @@ public class BalanceController {
 
     private final BalanceService balanceService;
 
-    @GetMapping("/api/balance")
+    @GetMapping("/balance")
     public List<BalanceResponseDTO> getBalances(@RequestParam String userEmail) {
         return balanceService.getBalances(userEmail);
     }
 }
+//@RestController
+//public class BalanceController {
+//
+//    private final BalanceService balanceService;
+//
+//    public BalanceController(BalanceService balanceService) {
+//        this.balanceService = balanceService;
+//    }
+//
+//    @GetMapping("/balance")
+//    public List<BalanceResponseDTO> getBalances(@RequestParam String userEmail) {
+//        return balanceService.getBalances(userEmail);
+//    }
+//}
