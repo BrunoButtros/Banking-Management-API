@@ -1,23 +1,22 @@
 package dev.bruno.banking.service;
 
-
 import dev.bruno.banking.model.User;
 import dev.bruno.banking.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    private final UserRepository userRepository;
 
-    @Autowired
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder; // Injeção do PasswordEncoder
 
     public User createUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -34,9 +33,7 @@ public class UserService {
         if (existingUser.isEmpty()) {
             throw new RuntimeException("User not found with id " + id);
         }
-
         User user = existingUser.get();
-
         if (updatedUser.getName() != null) {
             user.setName(updatedUser.getName());
         }
@@ -44,19 +41,16 @@ public class UserService {
             user.setEmail(updatedUser.getEmail());
         }
         if (updatedUser.getPassword() != null) {
-            user.setPassword(updatedUser.getPassword());
+            user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
         }
-
         return userRepository.save(user);
     }
 
-
-    public Optional<User> findById(Long Id) {
-        return userRepository.findById(Id);
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
-
 }
