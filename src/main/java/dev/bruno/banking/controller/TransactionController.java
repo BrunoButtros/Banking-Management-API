@@ -1,11 +1,13 @@
 package dev.bruno.banking.controller;
 
+import dev.bruno.banking.dto.TransactionRequestDTO;
+import dev.bruno.banking.dto.TransactionResponseDTO;
 import dev.bruno.banking.dto.TransactionSummaryDTO;
 import dev.bruno.banking.dto.TransactionSummaryRequestDTO;
-import dev.bruno.banking.model.Transaction;
 import dev.bruno.banking.service.ExcelTemplateService;
 import dev.bruno.banking.service.TransactionImportService;
 import dev.bruno.banking.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/transactions")
@@ -29,19 +30,17 @@ public class TransactionController {
     private final ExcelTemplateService excelTemplateService;
 
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(
-            @RequestBody Transaction transaction,
+    public ResponseEntity<TransactionResponseDTO> createTransaction(
+            @Valid @RequestBody TransactionRequestDTO transactionRequest,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Transaction createdTransaction = transactionService.createTransaction(transaction, userDetails);
+        TransactionResponseDTO createdTransaction = transactionService.createTransaction(transactionRequest, userDetails);
         return ResponseEntity.ok(createdTransaction);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> findById(@PathVariable Long id,
-                                                @AuthenticationPrincipal UserDetails userDetails) {
-        Optional<Transaction> transaction = transactionService.findById(id, userDetails);
-        return transaction.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<TransactionResponseDTO> findById(@PathVariable Long id,
+                                                           @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(transactionService.findById(id, userDetails));
     }
 
     @GetMapping("/summary")
@@ -53,12 +52,12 @@ public class TransactionController {
         return ResponseEntity.ok(summary);
     }
 
-
     @PutMapping("/{id}")
-    public ResponseEntity<Transaction> updateTransaction(@PathVariable Long id,
-                                                         @RequestBody Transaction transaction,
-                                                         @AuthenticationPrincipal UserDetails userDetails) {
-        Transaction updatedTransaction = transactionService.updateTransaction(id, transaction, userDetails);
+    public ResponseEntity<TransactionResponseDTO> updateTransaction(
+            @PathVariable Long id,
+            @Valid @RequestBody TransactionRequestDTO transactionRequest,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        TransactionResponseDTO updatedTransaction = transactionService.updateTransaction(id, transactionRequest, userDetails);
         return ResponseEntity.ok(updatedTransaction);
     }
 
@@ -66,14 +65,14 @@ public class TransactionController {
     public ResponseEntity<Void> deleteTransaction(@PathVariable Long id,
                                                   @AuthenticationPrincipal UserDetails userDetails) {
         transactionService.deleteTransaction(id, userDetails);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/download-template")
     public ResponseEntity<byte[]> downloadTransactionTemplate() {
         byte[] template = excelTemplateService.createTransactionTemplate();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Cadastro_de_transacoes.xlsx")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Transaction_Template.xlsx")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(template);
     }
@@ -83,6 +82,6 @@ public class TransactionController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("userId") Long userId) throws IOException {
         int totalImported = transactionImportService.importTransactions(file.getInputStream(), userId).size();
-        return ResponseEntity.ok("Transações importadas com sucesso! Total de transações importadas: " + totalImported);
+        return ResponseEntity.ok("Transactions imported successfully! Total transactions imported: " + totalImported);
     }
 }
