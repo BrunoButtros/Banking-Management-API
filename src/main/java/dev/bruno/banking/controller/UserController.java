@@ -1,12 +1,12 @@
 package dev.bruno.banking.controller;
 
-import dev.bruno.banking.model.User;
+import dev.bruno.banking.dto.UserRequestDTO;
+import dev.bruno.banking.dto.UserResponseDTO;
 import dev.bruno.banking.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/users")
@@ -16,14 +16,14 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO userRequest) {
+        UserResponseDTO createdUser = userService.createUser(userRequest);
         return ResponseEntity.ok(createdUser);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        User updatedUser = userService.updateUser(id, user);
+    public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequestDTO userRequest) {
+        UserResponseDTO updatedUser = userService.updateUser(id, userRequest);
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -34,16 +34,14 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        Optional<User> user = userService.findById(id);
-        return user.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
+        UserResponseDTO user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/email")
-    public ResponseEntity<User> getUserByEmail(@RequestParam String email) {
-        Optional<User> user = userService.findByEmail(email);
-        return user.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<UserResponseDTO> getUserByEmail(@RequestParam String email) {
+        UserResponseDTO user = userService.getUserByEmail(email);
+        return ResponseEntity.ok(user);
     }
 }

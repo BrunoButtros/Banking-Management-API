@@ -1,23 +1,43 @@
 package dev.bruno.banking.service;
 
+import dev.bruno.banking.dto.UserRequestDTO;
+import dev.bruno.banking.dto.UserResponseDTO;
 import dev.bruno.banking.model.User;
 import dev.bruno.banking.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import jakarta.validation.Valid;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // Injeção do PasswordEncoder
+    private final PasswordEncoder passwordEncoder;
 
-    public User createUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+    public UserResponseDTO createUser(@Valid UserRequestDTO userRequest) {
+        User user = new User();
+        user.setName(userRequest.getName());
+        user.setEmail(userRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+
+        User savedUser = userRepository.save(user);
+        return mapToUserResponseDTO(savedUser);
+    }
+
+    public UserResponseDTO updateUser(Long id, @Valid UserRequestDTO userRequest) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id " + id));
+
+        user.setName(userRequest.getName());
+        user.setEmail(userRequest.getEmail());
+        if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        }
+
+        User updatedUser = userRepository.save(user);
+        return mapToUserResponseDTO(updatedUser);
     }
 
     public void deleteUser(Long id) {
@@ -28,29 +48,23 @@ public class UserService {
         }
     }
 
-    public User updateUser(Long id, User updatedUser) {
-        Optional<User> existingUser = userRepository.findById(id);
-        if (existingUser.isEmpty()) {
-            throw new RuntimeException("User not found with id " + id);
-        }
-        User user = existingUser.get();
-        if (updatedUser.getName() != null) {
-            user.setName(updatedUser.getName());
-        }
-        if (updatedUser.getEmail() != null) {
-            user.setEmail(updatedUser.getEmail());
-        }
-        if (updatedUser.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
-        }
-        return userRepository.save(user);
+    public UserResponseDTO getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id " + id));
+        return mapToUserResponseDTO(user);
     }
 
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public UserResponseDTO getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email " + email));
+        return mapToUserResponseDTO(user);
     }
 
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
+    private UserResponseDTO mapToUserResponseDTO(User user) {
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        return dto;
     }
 }
