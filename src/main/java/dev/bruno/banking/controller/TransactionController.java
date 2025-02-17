@@ -70,7 +70,7 @@ public class TransactionController {
 
     @GetMapping("/download-template")
     public ResponseEntity<byte[]> downloadTransactionTemplate() {
-        byte[] template = excelTemplateService.createTransactionTemplate();
+        byte[] template = excelTemplateService.getTransactionTemplate();
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Transaction_Template.xlsx")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)

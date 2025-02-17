@@ -1,36 +1,25 @@
 package dev.bruno.banking.service;
 
 import dev.bruno.banking.exception.BusinessException;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import java.io.ByteArrayOutputStream;
+import org.springframework.util.StreamUtils;
+
 import java.io.IOException;
+import java.io.InputStream;
 
 @Service
 public class ExcelTemplateService {
 
-    public byte[] createTransactionTemplate() {
-        try (Workbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            Sheet sheet = workbook.createSheet("Transactions");
-            Row headerRow = sheet.createRow(0);
-            String[] headers = {"Amount", "Description", "Type", "Date"};
+    @Value("classpath:templates/Transaction_Template.xlsx")
+    private Resource transactionTemplate;
 
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                CellStyle style = workbook.createCellStyle();
-                Font font = workbook.createFont();
-                font.setBold(true);
-                style.setFont(font);
-                cell.setCellStyle(style);
-                sheet.autoSizeColumn(i);
-            }
-            workbook.write(outputStream);
-            return outputStream.toByteArray();
+    public byte[] getTransactionTemplate() {
+        try (InputStream inputStream = transactionTemplate.getInputStream()) {
+            return StreamUtils.copyToByteArray(inputStream);
         } catch (IOException e) {
-            throw new BusinessException("Failed to create Excel template", e);
+            throw new BusinessException("Failed to load Excel template", e);
         }
     }
 }

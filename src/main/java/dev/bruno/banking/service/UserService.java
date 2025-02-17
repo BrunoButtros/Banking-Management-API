@@ -2,6 +2,7 @@ package dev.bruno.banking.service;
 
 import dev.bruno.banking.dto.UserRequestDTO;
 import dev.bruno.banking.dto.UserResponseDTO;
+import dev.bruno.banking.exception.EmailAlreadyRegisteredException;
 import dev.bruno.banking.exception.UserNotFoundException;
 import dev.bruno.banking.model.User;
 import dev.bruno.banking.repository.UserRepository;
@@ -18,10 +19,15 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public UserResponseDTO createUser(@Valid UserRequestDTO userRequest) {
+        if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
+            throw new EmailAlreadyRegisteredException("Email already registered: " + userRequest.getEmail());
+        }
+
         User user = new User();
         user.setName(userRequest.getName());
         user.setEmail(userRequest.getEmail());
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+
         User savedUser = userRepository.save(user);
         return mapToUserResponseDTO(savedUser);
     }
@@ -29,11 +35,22 @@ public class UserService {
     public UserResponseDTO updateUser(Long id, @Valid UserRequestDTO userRequest) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id " + id));
+
+        if (!user.getEmail().equals(userRequest.getEmail())) {
+            userRepository.findByEmail(userRequest.getEmail())
+                    .ifPresent(existingUser -> {
+                        if (!existingUser.getId().equals(id)) {
+                            throw new EmailAlreadyRegisteredException("Email already registered: " + userRequest.getEmail());
+                        }
+                    });
+        }
+
         user.setName(userRequest.getName());
         user.setEmail(userRequest.getEmail());
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
+
         User updatedUser = userRepository.save(user);
         return mapToUserResponseDTO(updatedUser);
     }
