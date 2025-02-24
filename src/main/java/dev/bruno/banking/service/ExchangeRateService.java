@@ -3,6 +3,7 @@ package dev.bruno.banking.service;
 import dev.bruno.banking.dto.ExchangeConversionResponseDTO;
 import dev.bruno.banking.exception.ExchangeRateException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -13,10 +14,12 @@ public class ExchangeRateService {
     private final WebClient webClient;
     private static final String API_URL = "https://api.exchangerate.host/convert";
 
+    @Value("${exchange.api.key}")
+    private String apiKey;
+
     public ExchangeConversionResponseDTO convertCurrency(String from, String to, Double amount) {
-        String apiKey = System.getenv("EXCHANGERATE_API_KEY");
         if (apiKey == null || apiKey.isEmpty()) {
-            throw new ExchangeRateException("EXCHANGERATE_API_KEY environment variable not found.", null);
+            throw new ExchangeRateException("EXCHANGERATE_API_KEY is not set.", null);
         }
         String url = String.format("%s?access_key=%s&from=%s&to=%s&amount=%s",
                 API_URL, apiKey, from, to, amount);

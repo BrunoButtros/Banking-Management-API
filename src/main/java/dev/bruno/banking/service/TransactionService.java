@@ -97,7 +97,7 @@ public class TransactionService {
     }
 
     public Page<TransactionSummaryDTO> getTransactionSummary(TransactionSummaryRequestDTO requestDTO, UserDetails userDetails) {
-        int size = 10; // Fixed page size
+        int size = 10;
         return getTransactionSummary(
                 requestDTO.getStartDate(),
                 requestDTO.getEndDate(),
@@ -139,7 +139,6 @@ public class TransactionService {
         transactionRepository.delete(transaction);
     }
 
-    // Mappers
     private Transaction mapFromRequestDTO(TransactionRequestDTO dto) {
         Transaction transaction = new Transaction();
         transaction.setAmount(dto.getAmount());

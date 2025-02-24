@@ -17,17 +17,12 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // Busca por tipo de transação e e-mail
-    @Query("SELECT t FROM Transaction t WHERE t.type = :type AND t.user.email = :email")
     List<Transaction> findByTypeAndUserEmail(@Param("type") TransactionType type, @Param("email") String email);
 
-    // Busca por intervalo de datas e usuário associado
-    @Query("SELECT t FROM Transaction t WHERE t.date BETWEEN :startDate AND :endDate AND t.user.email = :email")
     List<Transaction> findByDateBetweenAndUserEmail(@Param("startDate") LocalDateTime startDate,
                                                     @Param("endDate") LocalDateTime endDate,
                                                     @Param("email") String email);
 
-    // Busca por intervalo de datas e tipo, com suporte a parâmetros opcionais
     @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId " +
             "AND (:startDate IS NULL OR t.date >= :startDate) " +
             "AND (:endDate IS NULL OR t.date <= :endDate) " +
@@ -38,7 +33,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                       @Param("type") TransactionType type,
                                                       Pageable pageable);
 
-    // Método de busca por ID e usuário
     Optional<Transaction> findByIdAndUserId(Long id, Long userId);
 
 }

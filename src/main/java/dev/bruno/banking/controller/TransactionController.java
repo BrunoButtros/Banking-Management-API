@@ -4,6 +4,7 @@ import dev.bruno.banking.dto.TransactionRequestDTO;
 import dev.bruno.banking.dto.TransactionResponseDTO;
 import dev.bruno.banking.dto.TransactionSummaryDTO;
 import dev.bruno.banking.dto.TransactionSummaryRequestDTO;
+import dev.bruno.banking.model.Transaction;
 import dev.bruno.banking.service.ExcelTemplateService;
 import dev.bruno.banking.service.TransactionImportService;
 import dev.bruno.banking.service.TransactionService;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/transactions")
@@ -44,13 +46,14 @@ public class TransactionController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<Page<TransactionSummaryDTO>> getTransactionSummary(
+    public ResponseEntity<List<TransactionSummaryDTO>> getTransactionSummary(
             @AuthenticationPrincipal UserDetails userDetails,
             @ModelAttribute TransactionSummaryRequestDTO requestDTO) {
 
-        Page<TransactionSummaryDTO> summary = transactionService.getTransactionSummary(requestDTO, userDetails);
-        return ResponseEntity.ok(summary);
+        Page<TransactionSummaryDTO> summaryPage = transactionService.getTransactionSummary(requestDTO, userDetails);
+        return ResponseEntity.ok(summaryPage.getContent());
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<TransactionResponseDTO> updateTransaction(
@@ -84,4 +87,5 @@ public class TransactionController {
         int totalImported = transactionImportService.importTransactions(file.getInputStream(), userId).size();
         return ResponseEntity.ok("Transactions imported successfully! Total transactions imported: " + totalImported);
     }
+
 }
