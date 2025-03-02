@@ -1,26 +1,37 @@
 package dev.bruno.banking.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import dev.bruno.banking.config.CustomUserDetails;
 import dev.bruno.banking.dto.TransactionRequestDTO;
 import dev.bruno.banking.dto.TransactionResponseDTO;
 import dev.bruno.banking.dto.TransactionSummaryDTO;
 import dev.bruno.banking.dto.TransactionSummaryRequestDTO;
 import dev.bruno.banking.model.TransactionType;
-import dev.bruno.banking.testconfig.ControllerTestConfig;
+import dev.bruno.banking.model.User;
+import dev.bruno.banking.service.ExcelTemplateService;
+import dev.bruno.banking.service.TransactionImportService;
+import dev.bruno.banking.service.TransactionService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.*;
@@ -30,28 +41,51 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(TransactionController.class)
-@Import(ControllerTestConfig.class)
-@AutoConfigureMockMvc(addFilters = false)
+@ExtendWith(MockitoExtension.class)
 public class TransactionControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired
-    private dev.bruno.banking.service.TransactionService transactionService;
+    @Mock
+    private ExcelTemplateService excelTemplateService;
 
-    @Autowired
-    private dev.bruno.banking.service.TransactionImportService transactionImportService;
+    @Mock
+    private TransactionService transactionService;
 
-    @Autowired
-    private dev.bruno.banking.service.ExcelTemplateService excelTemplateService;
+    @Mock
+    private TransactionImportService transactionImportService;
+
+    @InjectMocks
+    private TransactionController transactionController;
+
+    @BeforeEach
+    public void setup() {
+        objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        mockMvc = MockMvcBuilders.standaloneSetup(transactionController)
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .build();
+
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("user@example.com");
+        user.setPassword("password123");
+
+        CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                customUserDetails,
+                null,
+                customUserDetails.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
 
     @Test
-    @WithMockUser
     void testCreateTransaction() throws Exception {
         TransactionRequestDTO request = new TransactionRequestDTO();
         request.setAmount(BigDecimal.valueOf(100));
@@ -80,7 +114,6 @@ public class TransactionControllerTest {
     }
 
     @Test
-    @WithMockUser
     void testFindTransactionById() throws Exception {
         TransactionResponseDTO response = new TransactionResponseDTO();
         response.setId(1L);
@@ -98,7 +131,6 @@ public class TransactionControllerTest {
     }
 
     @Test
-    @WithMockUser
     void testGetTransactionSummary() throws Exception {
         TransactionSummaryDTO summary = new TransactionSummaryDTO(TransactionType.DEPOSIT, BigDecimal.valueOf(100), 1);
         when(transactionService.getTransactionSummary(any(TransactionSummaryRequestDTO.class), any()))
@@ -115,7 +147,6 @@ public class TransactionControllerTest {
     }
 
     @Test
-    @WithMockUser
     void testUpdateTransaction() throws Exception {
         TransactionRequestDTO request = new TransactionRequestDTO();
         request.setAmount(BigDecimal.valueOf(200));
@@ -143,7 +174,6 @@ public class TransactionControllerTest {
     }
 
     @Test
-    @WithMockUser
     void testDeleteTransaction() throws Exception {
         doNothing().when(transactionService).deleteTransaction(eq(1L), any());
 
@@ -153,7 +183,6 @@ public class TransactionControllerTest {
     }
 
     @Test
-    @WithMockUser
     void testDownloadTransactionTemplate() throws Exception {
         byte[] templateBytes = "fakeExcelContent".getBytes();
         when(excelTemplateService.getTransactionTemplate()).thenReturn(templateBytes);
@@ -165,7 +194,6 @@ public class TransactionControllerTest {
     }
 
     @Test
-    @WithMockUser
     void testImportTransactions() throws Exception {
         when(transactionImportService.importTransactions(any(), eq(1L)))
                 .thenReturn(List.of(new dev.bruno.banking.model.Transaction(), new dev.bruno.banking.model.Transaction()));

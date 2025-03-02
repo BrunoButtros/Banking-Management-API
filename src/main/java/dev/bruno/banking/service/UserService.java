@@ -1,13 +1,16 @@
 package dev.bruno.banking.service;
 
+import dev.bruno.banking.config.CustomUserDetails;
 import dev.bruno.banking.dto.UserRequestDTO;
 import dev.bruno.banking.dto.UserResponseDTO;
+import dev.bruno.banking.exception.BusinessException;
 import dev.bruno.banking.exception.EmailAlreadyRegisteredException;
 import dev.bruno.banking.exception.UserNotFoundException;
 import dev.bruno.banking.model.User;
 import dev.bruno.banking.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -81,5 +84,12 @@ public class UserService {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         return dto;
+    }
+
+    public Long getAuthenticatedUserId(UserDetails userDetails) {
+        if (userDetails instanceof CustomUserDetails) {
+            return ((CustomUserDetails) userDetails).getId();
+        }
+        throw new BusinessException("UserDetails is not an instance of CustomUserDetails");
     }
 }

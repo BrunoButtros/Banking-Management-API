@@ -1,13 +1,7 @@
-package dev.bruno.banking.testconfig;
+package dev.bruno.banking.config;
 
 import dev.bruno.banking.security.JwtTokenProvider;
-import dev.bruno.banking.service.BalanceService;
-import dev.bruno.banking.service.CustomUserDetailsService;
-import dev.bruno.banking.service.ExchangeRateService;
-import dev.bruno.banking.service.ExcelTemplateService;
-import dev.bruno.banking.service.TransactionImportService;
-import dev.bruno.banking.service.TransactionService;
-import dev.bruno.banking.service.UserService;
+import dev.bruno.banking.service.*;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -16,10 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 @TestConfiguration
 public class ControllerTestConfig {
 
-    @Bean
-    public JwtTokenProvider jwtTokenProvider() {
-        return Mockito.mock(JwtTokenProvider.class);
-    }
+
 
     @Bean
     public CustomUserDetailsService customUserDetailsService() {
@@ -59,5 +50,10 @@ public class ControllerTestConfig {
     @Bean
     public ExchangeRateService exchangeRateService() {
         return Mockito.mock(ExchangeRateService.class);
+    }
+
+    @Bean
+    public ReportService reportService() {
+        return Mockito.mock(ReportService.class);
     }
 }

@@ -1,6 +1,5 @@
 package dev.bruno.banking.service;
 
-import dev.bruno.banking.config.CustomUserDetails;
 import dev.bruno.banking.dto.TransactionRequestDTO;
 import dev.bruno.banking.dto.TransactionResponseDTO;
 import dev.bruno.banking.dto.TransactionSummaryDTO;
@@ -21,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,16 +35,9 @@ public class TransactionService {
     private final UserService userService;
     private final UserRepository userRepository;
 
-    private Long getAuthenticatedUserId(UserDetails userDetails) {
-        if (userDetails instanceof CustomUserDetails) {
-            return ((CustomUserDetails) userDetails).getId();
-        }
-        throw new BusinessException("UserDetails is not an instance of CustomUserDetails");
-    }
-
 
     public TransactionResponseDTO createTransaction(@Valid TransactionRequestDTO transactionRequest, UserDetails userDetails) {
-        Long userId = getAuthenticatedUserId(userDetails);
+        Long userId = userService.getAuthenticatedUserId(userDetails);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("User not found: " + userId));
 
@@ -66,7 +59,7 @@ public class TransactionService {
     }
 
     public TransactionResponseDTO findById(Long id, UserDetails userDetails) {
-        Long userId = getAuthenticatedUserId(userDetails);
+        Long userId = userService.getAuthenticatedUserId(userDetails);
         Transaction transaction = transactionRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found for the user: " + id));
         return mapToResponseDTO(transaction);
@@ -78,7 +71,7 @@ public class TransactionService {
                                                              int page,
                                                              int size,
                                                              UserDetails userDetails) {
-        Long userId = getAuthenticatedUserId(userDetails);
+        Long userId = userService.getAuthenticatedUserId(userDetails);
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<Transaction> transactions = transactionRepository.findByUserIdAndDateRangeAndType(userId, startDate, endDate, type, pageRequest);
         List<TransactionSummaryDTO> summaries = transactions.stream()
@@ -109,7 +102,7 @@ public class TransactionService {
     }
 
     public TransactionResponseDTO updateTransaction(Long id, @Valid TransactionRequestDTO transactionRequest, UserDetails userDetails) {
-        Long userId = getAuthenticatedUserId(userDetails);
+        Long userId = userService.getAuthenticatedUserId(userDetails);
         Transaction existingTransaction = transactionRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found for the user: " + id));
 
@@ -133,7 +126,7 @@ public class TransactionService {
     }
 
     public void deleteTransaction(Long id, UserDetails userDetails) {
-        Long userId = getAuthenticatedUserId(userDetails);
+        Long userId = userService.getAuthenticatedUserId(userDetails);
         Transaction transaction = transactionRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found for the user: " + id));
         transactionRepository.delete(transaction);

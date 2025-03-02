@@ -1,5 +1,6 @@
 package dev.bruno.banking.controller;
 
+import dev.bruno.banking.config.CustomUserDetails;
 import dev.bruno.banking.dto.TransactionRequestDTO;
 import dev.bruno.banking.dto.TransactionResponseDTO;
 import dev.bruno.banking.dto.TransactionSummaryDTO;
@@ -47,7 +48,7 @@ public class TransactionController {
 
     @GetMapping("/summary")
     public ResponseEntity<List<TransactionSummaryDTO>> getTransactionSummary(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @ModelAttribute TransactionSummaryRequestDTO requestDTO) {
 
         Page<TransactionSummaryDTO> summaryPage = transactionService.getTransactionSummary(requestDTO, userDetails);
