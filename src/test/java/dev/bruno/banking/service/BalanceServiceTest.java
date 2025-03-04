@@ -49,11 +49,12 @@ class BalanceServiceTest {
         dto.setCurrency("USD");
         List<BalanceResponseDTO> mockResponse = Collections.singletonList(dto);
 
+        ParameterizedTypeReference<List<BalanceResponseDTO>> typeRef = new ParameterizedTypeReference<>() {};
+
         doReturn(requestHeadersUriSpec).when(webClient).get();
         doReturn(requestHeadersSpec).when(requestHeadersUriSpec).uri("http://test-url");
         doReturn(responseSpec).when(requestHeadersSpec).retrieve();
-        doReturn(Mono.just(mockResponse)).when(responseSpec)
-                .bodyToMono(ArgumentMatchers.<ParameterizedTypeReference<List<BalanceResponseDTO>>>any());
+        doReturn(Mono.just(mockResponse)).when(responseSpec).bodyToMono(typeRef);
 
         List<BalanceResponseDTO> result = balanceService.getBalances("user@example.com");
 
@@ -65,16 +66,16 @@ class BalanceServiceTest {
 
     @Test
     void testGetBalances_ThrowsBusinessException() {
-        // Dado
+        ParameterizedTypeReference<List<BalanceResponseDTO>> typeRef = new ParameterizedTypeReference<>() {};
+
         doReturn(requestHeadersUriSpec).when(webClient).get();
         doReturn(requestHeadersSpec).when(requestHeadersUriSpec).uri("http://test-url");
         doReturn(responseSpec).when(requestHeadersSpec).retrieve();
-        doReturn(Mono.error(new RuntimeException("WebClient error")))
-                .when(responseSpec)
-                .bodyToMono(ArgumentMatchers.<ParameterizedTypeReference<List<BalanceResponseDTO>>>any());
+        doReturn(Mono.error(new RuntimeException("WebClient error"))).when(responseSpec).bodyToMono(typeRef);
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> balanceService.getBalances("user@example.com"));
+
         assertTrue(ex.getMessage().contains("Failed to retrieve balance data for user: user@example.com"));
     }
 }

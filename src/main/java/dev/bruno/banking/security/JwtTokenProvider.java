@@ -19,25 +19,22 @@ public class JwtTokenProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-
-    @Value("${jwt.expiration.ms}")
-    private long jwtExpirationInMs;
-
     private final SecretKey secretKey;
+    private final long jwtExpirationInMs;
 
-    public JwtTokenProvider(@Value("${jwt.secret}") String jwtSecret) {
+    public JwtTokenProvider(
+            @Value("${jwt.secret}") String jwtSecret,
+            @Value("${jwt.expiration.ms}") long jwtExpirationInMs) {
         if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
             throw new IllegalArgumentException("A chave secreta JWT não foi configurada corretamente.");
         }
         this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        this.jwtExpirationInMs = jwtExpirationInMs;
     }
 
-    // Gera o token JWT utilizando o secretKey
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
-        logger.debug("Gerando token para o usuário: " + username);
+        logger.debug("Gerando token para o usuário: {}", username);
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
@@ -59,13 +56,15 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    // Valida o token JWT
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(authToken);
+            Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(authToken);
             return true;
         } catch (Exception ex) {
-            logger.error("Erro ao validar token JWT", ex);
+            logger.error("Erro ao validar token JWT: {}", ex.getMessage());
         }
         return false;
     }
