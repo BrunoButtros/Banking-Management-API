@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:latest
+    container_name: banking-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: banking_management
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  app:
+    build: .
+    container_name: banking-app
+    restart: always
+    depends_on:
+      - db
+    environment:
+      BANKING_MANAGEMENT_JDBC_URL: jdbc:mysql://db:3306/banking_management?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      MOCK_API_BALANCE_URL: https://run.mocky.io/v3/586637c9-c8c9-414b-959c-6028efdd0c47
+      EXCHANGE_API_KEY: https://api.exchangerate.host/convert
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql_data:
