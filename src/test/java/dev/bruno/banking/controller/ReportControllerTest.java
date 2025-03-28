@@ -12,15 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -28,21 +24,21 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReportControllerTest {
 
+    private static final String FORMAT_PDF = "PDF";
+    private static final String FORMAT_XLS = "XLS";
+
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
     @Mock
     private ReportService reportService;
-
-    @Mock
-    private UserDetailsService userDetailsService;
 
     @InjectMocks
     private ReportController reportController;
@@ -57,40 +53,59 @@ public class ReportControllerTest {
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .build();
 
-        dev.bruno.banking.model.User user = new User();
+        setAuthenticatedUser();
+    }
+
+    private void setAuthenticatedUser() {
+        User user = new User();
         user.setId(1L);
         user.setEmail("user@example.com");
         user.setPassword("password123");
 
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
-
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                customUserDetails,
-                null,
-                customUserDetails.getAuthorities()
-        );
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    @Test
-    public void testGenerateReport() throws Exception {
-
+    private TransactionSummaryRequestDTO createRequestDTO() {
         TransactionSummaryRequestDTO requestDTO = new TransactionSummaryRequestDTO();
         requestDTO.setStartDate(LocalDateTime.now().minusDays(1));
         requestDTO.setEndDate(LocalDateTime.now());
         requestDTO.setType("deposit");
         requestDTO.setPage(0);
+        return requestDTO;
+    }
 
+    @Test
+    public void testGenerateReport_PDF() throws Exception {
+        TransactionSummaryRequestDTO requestDTO = createRequestDTO();
         byte[] expectedReport = new byte[0];
 
-        when(reportService.generateReport(any(TransactionSummaryRequestDTO.class), any(UserDetails.class), eq("PDF")))
+        when(reportService.generateReport(any(TransactionSummaryRequestDTO.class), any(UserDetails.class), eq(FORMAT_PDF)))
                 .thenReturn(expectedReport);
 
         mockMvc.perform(post("/reports")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param("format", "PDF")
+                        .param("format", FORMAT_PDF)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename=transaction-summary.pdf"));
+    }
+
+    @Test
+    public void testGenerateReport_NonPdfFormat() throws Exception {
+        TransactionSummaryRequestDTO requestDTO = createRequestDTO();
+        byte[] expectedReport = new byte[0];
+
+        when(reportService.generateReport(any(TransactionSummaryRequestDTO.class), any(UserDetails.class), eq(FORMAT_XLS)))
+                .thenReturn(expectedReport);
+
+        mockMvc.perform(post("/reports")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("format", FORMAT_XLS)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=transaction-summary.xlsx"));
     }
 }
