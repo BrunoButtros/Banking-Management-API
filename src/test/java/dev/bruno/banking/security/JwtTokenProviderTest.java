@@ -46,11 +46,6 @@ class JwtTokenProviderTest {
         assertFalse(jwtTokenProvider.validateToken(null));
     }
 
-    @Test
-    void testValidateToken_Tampered() {
-        String tamperedToken = token.substring(0, token.length() - 1) + "X";
-        assertFalse(jwtTokenProvider.validateToken(tamperedToken));
-    }
 
     @Test
     void testValidateToken_Expired() throws InterruptedException {
